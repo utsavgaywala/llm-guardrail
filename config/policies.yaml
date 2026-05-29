@@ -1,0 +1,50 @@
+# ================================================
+#  LLM GuardRail — Policy Configuration
+#  Edit this file to turn rules ON or OFF
+#  No Python code changes needed!
+# ================================================
+
+system_prompt: |
+  You are a helpful, accurate and safe AI assistant.
+  Always be concise and factual.
+  Never provide harmful or misleading information.
+
+policies:
+
+  # --- INPUT POLICIES ---
+
+  block_pii:
+    enabled: true
+    description: "Block messages containing personal information"
+
+  block_prompt_injection:
+    enabled: true
+    description: "Block attempts to override system instructions"
+
+  block_jailbreak:
+    enabled: true
+    description: "Block attempts to remove AI safety restrictions"
+
+  max_input_length:
+    enabled: true
+    description: "Reject messages that are too long"
+    value: 2000
+
+  # --- OUTPUT POLICIES ---
+
+  block_toxic_output:
+    enabled: true
+    description: "Block harmful content in AI responses"
+
+  require_json_output:
+    enabled: false
+    description: "Force LLM to respond in valid JSON format"
+
+  require_citations:
+    enabled: false
+    description: "Block responses without source citations"
+
+  min_output_length:
+    enabled: true
+    description: "Reject responses that are too short"
+    value: 10
