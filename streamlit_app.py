@@ -1,14 +1,11 @@
 """
 LLM GuardRail — Streamlit Dashboard
-=====================================
-Beautiful UI to demo the guardrails pipeline.
 """
 
 import streamlit as st
 import requests
 import time
 
-# ── Page Config ───────────────────────────────────────────
 st.set_page_config(
     page_title="LLM GuardRail",
     page_icon="🛡️",
@@ -16,12 +13,9 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# ── Custom CSS ────────────────────────────────────────────
 st.markdown("""
 <style>
-    body { background-color: #0e1117; }
     .block-container { padding: 1.5rem 2rem 2rem 2rem; max-width: 1400px; }
-
     .gr-title {
         font-size: 38px;
         font-weight: 800;
@@ -29,12 +23,7 @@ st.markdown("""
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     }
-    .gr-sub {
-        font-size: 15px;
-        color: #aaa;
-        margin-top: -10px;
-        margin-bottom: 1.5rem;
-    }
+    .gr-sub { font-size: 15px; color: #aaa; margin-top: -10px; margin-bottom: 1.5rem; }
     .stat-card {
         background: #1a1d26;
         border-radius: 14px;
@@ -48,7 +37,6 @@ st.markdown("""
     }
     .stat-val { font-size: 38px; font-weight: 800; margin: 0; }
     .stat-lbl { font-size: 13px; color: #888; margin-top: 4px; }
-
     .section-title {
         font-size: 18px;
         font-weight: 700;
@@ -64,29 +52,18 @@ st.markdown("""
         border-left: 4px solid #333;
         background: #1a1d26;
     }
-    .pipeline-idle   { border-left-color: #555; background: #1a1d26; }
-    .pipeline-run    { border-left-color: #ffbb33; background: #1f1c0e; }
-    .pipeline-pass   { border-left-color: #00c851; background: #0d1f14; }
-    .pipeline-block  { border-left-color: #ff4444; background: #1f0d0d; }
-
-    .pipe-head {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
+    .pipeline-idle  { border-left-color: #555; background: #1a1d26; }
+    .pipeline-run   { border-left-color: #ffbb33; background: #1f1c0e; }
+    .pipeline-pass  { border-left-color: #00c851; background: #0d1f14; }
+    .pipeline-block { border-left-color: #ff4444; background: #1f0d0d; }
+    .pipe-head { display: flex; justify-content: space-between; align-items: center; }
     .pipe-name { font-size: 14px; font-weight: 600; color: #fff; }
-    .pipe-badge {
-        font-size: 11px;
-        padding: 2px 10px;
-        border-radius: 99px;
-        font-weight: 500;
-    }
+    .pipe-badge { font-size: 11px; padding: 2px 10px; border-radius: 99px; font-weight: 500; }
     .badge-idle  { background:#2a2d3a; color:#888; }
     .badge-run   { background:#332d00; color:#ffbb33; }
     .badge-pass  { background:#0d2e18; color:#00c851; }
     .badge-block { background:#2e0d0d; color:#ff4444; }
     .pipe-detail { font-size: 12px; color: #888; margin-top: 6px; font-family: monospace; }
-
     .resp-card {
         background: #1a1d26;
         border-radius: 12px;
@@ -105,45 +82,27 @@ st.markdown("""
         border: 1px solid #2a2d3a;
         font-size: 13px;
     }
-    .hist-msg { color: #fff; font-weight: 500; }
+    .hist-msg  { color: #fff; font-weight: 500; }
     .hist-meta { color: #888; font-size: 11px; margin-top: 3px; }
-
-    .preset-section { margin-bottom: 12px; }
-    div[data-testid="stButton"] button {
-        border-radius: 8px !important;
-        font-size: 13px !important;
-        padding: 6px 12px !important;
-        width: 100% !important;
-    }
-    div[data-testid="stTextArea"] textarea {
-        background: #1a1d26 !important;
-        border: 1px solid #2a2d3a !important;
-        border-radius: 10px !important;
-        color: #fff !important;
-        font-size: 14px !important;
-    }
-    .stAlert { border-radius: 10px !important; }
-    hr { border-color: #2a2d3a !important; margin: 1rem 0 !important; }
 </style>
 """, unsafe_allow_html=True)
 
-# ── Session State ─────────────────────────────────────────
+# Session state
 for key, val in [("history", []), ("total", 0), ("blocked", 0), ("passed", 0), ("preset", "")]:
     if key not in st.session_state:
         st.session_state[key] = val
 
-# ── Header ────────────────────────────────────────────────
+# Header
 st.markdown('<p class="gr-title">🛡️ LLM GuardRail</p>', unsafe_allow_html=True)
 st.markdown('<p class="gr-sub">Production-grade safety middleware — every message checked before reaching the AI</p>', unsafe_allow_html=True)
 
-# ── Stats Row ─────────────────────────────────────────────
+# Stats
 c1, c2, c3, c4 = st.columns(4)
 stats = [
     (st.session_state.total,   "#00d4ff", "Total Requests"),
     (st.session_state.passed,  "#00c851", "✅ Passed"),
     (st.session_state.blocked, "#ff4444", "🔴 Blocked"),
-    (f"{round(st.session_state.blocked / st.session_state.total * 100, 1) if st.session_state.total else 0}%",
-     "#ffbb33", "⚡ Block Rate"),
+    (f"{round(st.session_state.blocked / st.session_state.total * 100, 1) if st.session_state.total else 0}%", "#ffbb33", "⚡ Block Rate"),
 ]
 for col, (val, color, label) in zip([c1, c2, c3, c4], stats):
     with col:
@@ -155,19 +114,27 @@ for col, (val, color, label) in zip([c1, c2, c3, c4], stats):
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# ── Main 3-column layout ──────────────────────────────────
+# 3 column layout
 chat_col, pipe_col, resp_col = st.columns([1.1, 1.1, 1])
 
-# ════════════════════════════════════════════════
-# LEFT — Chat Input
-# ════════════════════════════════════════════════
+def render(container, icon, name, status, detail):
+    css   = {"idle":"pipeline-idle","run":"pipeline-run","pass":"pipeline-pass","block":"pipeline-block"}[status]
+    badge = {"idle":"badge-idle","run":"badge-run","pass":"badge-pass","block":"badge-block"}[status]
+    label = {"idle":"Idle","run":"Running...","pass":"Passed ✓","block":"Blocked ✗"}[status]
+    container.markdown(f"""
+    <div class="pipeline-card {css}">
+        <div class="pipe-head">
+            <span class="pipe-name">{icon} {name}</span>
+            <span class="pipe-badge {badge}">{label}</span>
+        </div>
+        <div class="pipe-detail">{detail}</div>
+    </div>""", unsafe_allow_html=True)
+
 with chat_col:
     st.markdown('<p class="section-title">💬 Chat</p>', unsafe_allow_html=True)
     st.markdown("**Quick presets:**")
-
     r1c1, r1c2 = st.columns(2)
     r2c1, r2c2 = st.columns(2)
-
     with r1c1:
         if st.button("✅ Safe message"):
             st.session_state.preset = "What is machine learning?"
@@ -191,54 +158,28 @@ with chat_col:
     )
     send = st.button("🚀 Send through GuardRail", use_container_width=True, type="primary")
 
-# ════════════════════════════════════════════════
-# MIDDLE — Pipeline Stages
-# ════════════════════════════════════════════════
 with pipe_col:
     st.markdown('<p class="section-title">⚙️ Pipeline Stages</p>', unsafe_allow_html=True)
-
-    def render(container, icon, name, status, detail):
-        css = {"idle":"pipeline-idle","run":"pipeline-run","pass":"pipeline-pass","block":"pipeline-block"}[status]
-        badge_css = {"idle":"badge-idle","run":"badge-run","pass":"badge-pass","block":"badge-block"}[status]
-        label = {"idle":"Idle","run":"Running...","pass":"Passed ✓","block":"Blocked ✗"}[status]
-        container.markdown(f"""
-        <div class="pipeline-card {css}">
-            <div class="pipe-head">
-                <span class="pipe-name">{icon} {name}</span>
-                <span class="pipe-badge {badge_css}">{label}</span>
-            </div>
-            <div class="pipe-detail">{detail}</div>
-        </div>""", unsafe_allow_html=True)
-
     s1 = st.empty()
     s2 = st.empty()
     s3 = st.empty()
-
     render(s1, "🔍", "Input Guardrails",  "idle", "PII • Injection • Jailbreak • Length")
     render(s2, "🧠", "LLM — Llama AI",    "idle", "Groq API — llama-3.1-8b-instant")
     render(s3, "✅", "Output Guardrails", "idle", "Toxicity • Length • Schema")
-
     latency_box = st.empty()
 
-# ════════════════════════════════════════════════
-# RIGHT — Response & History
-# ════════════════════════════════════════════════
 with resp_col:
     st.markdown('<p class="section-title">📋 Response</p>', unsafe_allow_html=True)
     resp_box = st.empty()
     resp_box.markdown('<div class="resp-card" style="color:#555">Send a message to see the AI response here...</div>', unsafe_allow_html=True)
-
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown('<p class="section-title">📜 History</p>', unsafe_allow_html=True)
     hist_box = st.empty()
     hist_box.markdown('<p style="color:#555;font-size:13px">No requests yet.</p>', unsafe_allow_html=True)
 
-# ════════════════════════════════════════════════
-# SEND LOGIC
-# ════════════════════════════════════════════════
+# Send logic
 if send and user_message.strip():
     st.session_state.total += 1
-
     render(s1, "🔍", "Input Guardrails",  "run",  "Checking PII, injection, jailbreak...")
     render(s2, "🧠", "LLM — Llama AI",    "idle", "Waiting for input check...")
     render(s3, "✅", "Output Guardrails", "idle", "Waiting...")
@@ -250,7 +191,7 @@ if send and user_message.strip():
             json={"message": user_message, "user_id": "streamlit_user"},
             timeout=30
         )
-        data = r.json()
+        data     = r.json()
         checks   = data.get("checks_performed", [])
         blocked  = data.get("blocked", False)
         reason   = data.get("block_reason", "")
@@ -261,7 +202,6 @@ if send and user_message.strip():
         input_blocked = blocked and not llm_ran
         output_blocked= blocked and llm_ran
 
-        # Stage 1
         if input_blocked:
             render(s1, "🔍", "Input Guardrails",  "block", f"BLOCKED — {reason}")
             render(s2, "🧠", "LLM — Llama AI",    "idle",  "Never reached")
@@ -269,10 +209,9 @@ if send and user_message.strip():
             st.session_state.blocked += 1
             resp_box.markdown(f'<div class="resp-card"><span style="color:#ff4444;font-weight:600">🔴 BLOCKED</span><br><br>{reason}</div>', unsafe_allow_html=True)
         else:
-            input_detail = " | ".join([c for c in checks if any(x in c for x in ["pii","injection","jailbreak","length_check: pass ("][:4])])
+            input_detail = " | ".join([c for c in checks if any(x in c for x in ["pii","injection","jailbreak","length_check: pass"])])
             render(s1, "🔍", "Input Guardrails", "pass", input_detail or "All checks passed ✓")
             time.sleep(0.3)
-
             render(s2, "🧠", "LLM — Llama AI", "run", "Generating response...")
             time.sleep(0.4)
 
@@ -290,7 +229,6 @@ if send and user_message.strip():
 
             latency_box.markdown(f'<p style="color:#555;font-size:12px;text-align:right">⏱ Total latency: {latency}ms</p>', unsafe_allow_html=True)
 
-        # Save history
         st.session_state.history.append({
             "msg": user_message,
             "blocked": blocked,
@@ -298,10 +236,9 @@ if send and user_message.strip():
             "latency": latency
         })
 
-        # Render history
         hist_html = ""
         for item in reversed(st.session_state.history[-5:]):
-            icon = "🔴" if item["blocked"] else "🟢"
+            icon   = "🔴" if item["blocked"] else "🟢"
             detail = item["reason"] if item["blocked"] else f"{item['latency']}ms"
             hist_html += f"""
             <div class="hist-item">
