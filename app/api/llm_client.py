@@ -6,20 +6,16 @@ import os
 from groq import Groq
 from dotenv import load_dotenv
 
-# Load .env file locally — ignored on Railway (uses real env vars)
-load_dotenv()
-
 
 class LLMClient:
 
     def __init__(self):
-        # Read directly from environment — works both locally and on Railway
-        api_key = os.environ.get("GROQ_API_KEY") or os.getenv("GROQ_API_KEY")
+        load_dotenv()
+        api_key = os.environ.get("GROQ_API_KEY")
+        print(f"[LLMClient] All env vars: {list(os.environ.keys())}")
+        print(f"[LLMClient] GROQ_API_KEY found: {bool(api_key)}")
         if not api_key:
-            raise EnvironmentError(
-                "GROQ_API_KEY not found! Add it to .env file locally "
-                "or as an environment variable on Railway."
-            )
+            raise EnvironmentError("GROQ_API_KEY not found!")
         self.client = Groq(api_key=api_key)
         self.model = os.environ.get("LLM_MODEL", "llama-3.1-8b-instant")
         print(f"[LLMClient] Using model: {self.model} (FREE)")
