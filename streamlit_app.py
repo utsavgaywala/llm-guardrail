@@ -223,7 +223,7 @@ with tab1:
 
         try:
             r = requests.post(
-                "http://127.0.0.1:8000/chat",
+                "https://llm-guardrail-production.up.railway.app/chat",
                 json={"message": user_message, "user_id": "streamlit_user"},
                 timeout=30
             )
@@ -300,8 +300,8 @@ with tab2:
 
     # Fetch stats from API
     try:
-        stats_resp = requests.get("http://127.0.0.1:8000/stats", timeout=5)
-        logs_resp  = requests.get("http://127.0.0.1:8000/logs",  timeout=5)
+        stats_resp = requests.get("https://llm-guardrail-production.up.railway.app/stats", timeout=5)
+        logs_resp  = requests.get("https://llm-guardrail-production.up.railway.app/logs",  timeout=5)
         stats_data = stats_resp.json()
         logs_data  = logs_resp.json()["logs"]
 
@@ -409,4 +409,4 @@ with tab2:
             st.info("No logs yet!")
 
     except Exception as e:
-        st.error(f"⚠️ Cannot connect to API server!\n\nMake sure uvicorn is running at http://127.0.0.1:8000\n\nError: {e}")
+        st.error(f"⚠️ Cannot connect to API server!\n\nMake sure uvicorn is running at https://llm-guardrail-production.up.railway.app\n\nError: {e}")
